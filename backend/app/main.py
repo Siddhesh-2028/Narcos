@@ -3,7 +3,7 @@ import httpx
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.endpoints import analysis, academy, notifications
+from app.api.endpoints import analysis, academy, notifications, fraud
 from app.config.settings import settings
 
 async def ping_self():
@@ -53,6 +53,7 @@ app.add_middleware(
 
 app.include_router(analysis.router, prefix=f"{settings.API_V1_STR}", tags=["analysis"])
 app.include_router(academy.router, prefix=f"{settings.API_V1_STR}/academy", tags=["academy"])
+app.include_router(fraud.router, prefix=f"{settings.API_V1_STR}/fraud", tags=["fraud"])
 app.include_router(notifications.router, prefix=f"{settings.API_V1_STR}/notifications", tags=["notifications"])
 
 @app.get("/")

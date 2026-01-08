@@ -11,6 +11,7 @@ class ConfidenceLevel(str, Enum):
 
 class AnalysisRequest(BaseModel):
     # fefines the shape of incoming analysis requests.
+    startup_name: Optional[str] = Field("Unnamed Project", description="Name of the startup")
     startup_description: str = Field(
         ..., description="Startup elevator pitch or description"
     )
@@ -40,6 +41,12 @@ class EvidenceUsed(BaseModel):
     usage_reason: str
 
 
+class FraudAlertSchema(BaseModel):
+    status: str
+    risk_score: int
+    flags: List[str]
+    summary: str
+
 class AnalysisResponse(BaseModel):
 
     # defines the shape of the analysis output.
@@ -48,6 +55,7 @@ class AnalysisResponse(BaseModel):
     startup_summary: str
     confidence_indicator: ConfidenceLevel
     overall_score: int = Field(..., ge=0, le=100)
+    fraud_alert: Optional[FraudAlertSchema] = None
     recommended_investors: List[InvestorRecommendation]
     why_fits: List[str]
     why_does_not_fit: List[str]

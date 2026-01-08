@@ -1,14 +1,16 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Dict
-from app.schemas.analysis import AnalysisRequest, AnalysisResponse, TranslationRequest
+from app.schemas.analysis import AnalysisRequest, AnalysisResponse, TranslationRequest, FraudAlertSchema, ConfidenceLevel
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.core.orchestrator import AnalysisOrchestrator
+from app.services.fraud_investigator import FraudInvestigator
 from app.core.chat_orchestrator import ChatOrchestrator
 from app.generation.generator import Generator
 from app.core.storage import storage
 
 
 router = APIRouter()
+fraud_investigator = FraudInvestigator()
 
 
 @router.post("/analyze", response_model=AnalysisResponse)
@@ -19,7 +21,30 @@ async def analyze_funding_fit(
     # API Layer:Entry point for startup analysis.
 
     try:
+        # 1. Run Core Analysis
         result = await orchestrator.run_analysis(request)
+
+        # 2. Run Background Fraud Check (parallelizable in future, sequential for now)
+        if request.startup_name and request.startup_name.lower() != "unnamed project":
+            print(f"[*] Running fraud check for: {request.startup_name}")
+            check = await fraud_investigator.investigate(request.startup_name, "startup")
+            
+            # Attach result to response
+            result.fraud_alert = FraudAlertSchema(
+                status=check.status,
+                risk_score=check.score,
+                flags=check.flags,
+                summary=check.summary
+            )
+
+            # 3. Apply Penalties if Fraud Detected
+            if check.status == "risk":
+                print(f"[!] FRAUD DETECTED for {request.startup_name}. Overriding score.")
+                result.overall_score = 0
+                result.confidence_indicator = ConfidenceLevel.LOW
+                result.startup_summary = f"[⚠️ FRAUD WARNING: {check.summary}] " + result.startup_summary
+                result.why_does_not_fit.insert(0, f"FRAUD RISK: Background checks indicate high risk factors: {', '.join(check.flags)}")
+
         storage.save_analysis(result)
         return result
     except Exception as e:
