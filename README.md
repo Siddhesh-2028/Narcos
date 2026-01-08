@@ -104,4 +104,69 @@ npm run dev
 ### 3. Sync Intelligence
 Go to **Settings** in the dashboard and click **"Force Intelligence Sync"** to populate your local database with the latest startup market data.
 
+### 4. Docker Setup (Recommended)
+This approach runs both the frontend and backend services in isolated containers.
+
+**Prerequisites:**
+- Docker & Docker Compose installed
+- `.env` files configured in `frontend/` and `backend/`
+
+```bash
+# Build and run the entire stack from the project root
+docker-compose -f infra/docker-compose.yml up --build
+```
+- Frontend will be available at: http://localhost:5173 (or port 80 based on mapping)
+- Backend API will be available at: http://localhost:8000
+
+---
+
+## Deployment & Docker Hub
+
+To publish these images to Docker Hub (as per submission requirements):
+
+1.  **Login to Docker Hub:**
+    ```bash
+    docker login
+    ```
+2.  **Build & Push Images:**
+    Replace `<your-username>` with your actual Docker Hub username.
+    ```bash
+    # Backend
+    docker build -t <your-username>/fundingsense-backend ./backend
+    docker push <your-username>/fundingsense-backend
+
+    # Frontend
+    docker build -t <your-username>/fundingsense-frontend ./frontend
+    docker push <your-username>/fundingsense-frontend
+    ```
+
+---
+
+## Assumptions and Limitations
+
+### Assumptions
+1.  **API Quotas**: The system assumes reliable access to Google Gemini API and YouTube Data API. Rate limits may affect "Intelligence Sync" features.
+2.  **Internet Connectivity**: Grounding features (Search & Video RAG) require an active internet connection to function.
+3.  **Data Persistence**: User analysis history and chat logs are stored in local JSON files (`backend/data/`). In a production environment, this would be replaced by a PostgreSQL database.
+4.  **Single User**: The current iteration is optimized for single-tenant usage (locally hosted), though it supports multi-user logic via Supabase Auth.
+
+### Limitations
+1.  **Video Processing**: The "Video Academy" currently indexes metadata and transcripts. Full video frame analysis is limited to avoid excessive token usage.
+2.  **Language Support**: While the UI supports 8 languages, the Video Academy search is primarily optimized for English and Hindi content.
+3.  **Sync Latency**: The "Real-Time Intelligence Sync" can take 30-60 seconds depending on the volume of new market data found.
+
+---
+
+## Project Structure (For Submission)
+This repository is structured to be "Code-Complete" and "Deploy-Ready":
+
+*   `infra/`:
+    *   `docker-compose.yml`: Orchestration for Frontend (React/Nginx) and Backend (FastAPI).
+*   `backend/`:
+    *   `Dockerfile`: Python 3.11 Slim image.
+    *   `app/`: Core application logic, RAG engine, and API services.
+*   `frontend/`:
+    *   `Dockerfile`: Node 20 Build -> Nginx Alpine Serve.
+    *   `src/`: Full React application source.
+
 ---
