@@ -43,7 +43,7 @@ export default function SignUp() {
 
       if (data.user) {
         toast({
-          title: "Account created successfully",
+          title: "Please check your email for the confirmation",
           description: "Please login to get started",
           className: "bg-primary text-primary-foreground border-none shadow-xl rounded-2xl",
         });
