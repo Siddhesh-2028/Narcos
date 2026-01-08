@@ -31,3 +31,7 @@ __pycache__/
 .venv/
 backend/.env
 backend/venv
+
+# Docker images (submission)
+*.tar
+submission/
